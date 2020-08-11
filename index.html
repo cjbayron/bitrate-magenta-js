@@ -13,6 +13,11 @@
     <!-- import the webpage's javascript file -->
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.39/build/Tone.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nexusui@2.0.13/dist/NexusUI.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/1.2.8/tf.min.js"></script>
+    <!-- Core library, since we're going to use a player -->
+    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.19.0/es6/core.js"></script>
+    <!--Model we want to use -->
+    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.19.0/es6/music_rnn.js"></script>
     <script src="/script.js" defer></script>
   </head>  
   <body>
@@ -29,6 +34,9 @@
 
     <div id="sequencer">
     </div>
+    <button id="generate_melody">
+      Generate Melody
+    </button>
     <!-- include the Glitch button to show what the webpage is about and
           to make it easier for folks to view source and remix -->
     <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>

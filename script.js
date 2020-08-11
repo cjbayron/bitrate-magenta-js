@@ -158,3 +158,5 @@ sequencer.on('change', ({column, row, state}) => {
 
   //console.log(time, note);
 })
+
+// Magenta stuff
