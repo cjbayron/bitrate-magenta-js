@@ -1,7 +1,7 @@
 Resources for Making Interactive Music Apps With Magenta.js
 ===========================================================
 
-**NOTE: Base code copied from https://glitch.com/edit/#!/curious-zigzag-anteater. All succeeding code is based from BitRate 2020 Magenta.js workshop.**
+**NOTE: Code is based from BitRate 2020 Magenta.js workshop.**
 
 Part 1
 ------
