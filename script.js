@@ -74,6 +74,33 @@ let drumPattern = [
   ['1:3:2', 'hatOpen'],
 ];
 
+// for GrooVAE
+let midiToDrum = new Map([
+  [36, 'kick'],
+  [37, 'snare'],
+  [38, 'snare'],
+  [40, 'snare'],
+  [42, 'hatClosed'],
+  [22, 'hatClosed'],
+  [44, 'hatClosed'],
+  [46, 'hatOpen'],
+  [26, 'hatOpen'],
+  [43, 'tomLow'],
+  [58, 'tomLow'],
+  [47, 'tomMid'],
+  [45, 'tomMid'],
+  [50, 'tomHigh'],
+  [48, 'tomHigh'],
+  [49, 'crash'],
+  [52, 'crash'],
+  [55, 'crash'],
+  [57, 'crash'],
+  [51, 'ride'],
+  [53, 'ride'],
+  [59, 'ride'],
+]);
+let drumToMidi = new Map([...midiToDrum].map((e) => e.reverse()));
+
 let bassPattern = [
   ['0:0:0', 'C#2'],
   ['0:0:3', 'C#2'],
@@ -160,3 +187,57 @@ sequencer.on('change', ({column, row, state}) => {
 })
 
 // Magenta stuff
+let melodyRnn = new music_rnn.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
+let melodyRnnLoaded = melodyRnn.initialize();
+
+document.getElementById('generate-melody').onclick = async () => {
+  await melodyRnnLoaded;
+
+  let seed = {
+    notes: [
+      {pitch: Tone.Frequency('C#3').toMidi(), quantizedStartStep: 0, quantizedEndStep: 4}
+    ],
+    totalQuantizedSteps: 4,
+    quantizationInfo: { stepsPerQuarter: 4 }
+  }
+
+  let steps = 28; // steps for the RNN
+  let temperature = 1.2;
+  let chordProgression = ['C#m7']
+
+  let result = await melodyRnn.continueSequence(seed, steps, temperature, chordProgression);
+  //console.log(result);
+  
+  // concat sequence
+  let combined = core.sequences.concatenate([seed, result]);
+  
+  // clear all
+  sequencer.matrix.populate.all([0]);
+  for (let note of combined.notes){
+    let column = note.quantizedStartStep;
+    let noteName = Tone.Frequency(note.pitch, 'midi').toNote();
+    let row = sequencerRows.indexOf(noteName);
+    if (row >= 0) { // note existing in sequencer
+      sequencer.matrix.set.cell(column, row, 1);
+    }
+  }
+}
+
+let grooVae = new music_vae.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/groovae_2bar_humanize');
+let grooVaeLoaded = grooVae.initialize();
+
+document.getElementById('groove-drums').onclick = async () => {
+  await grooVaeLoaded;
+
+  let sixteenthNoteTicks = Tone.Time('16n').toTicks();
+  let original = {
+    notes: drumPattern.map(([time, drum]) => ({
+      pitch: drumToMidi.get(drum),
+      quantizedStartStep: Tone.Time(time).toTicks() / sixteenthNoteTicks,
+      quantizedEndStep: (Tone.Time(time).toTicks() / sixteenthNoteTicks) + 1
+    })),
+    totalQuantizedSteps: 32,
+    quantizationInfo: {stepsPerQuarter: 4}
+  };
+
+}
