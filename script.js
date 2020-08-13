@@ -11,6 +11,11 @@ let drumPlayers = new Tone.Players({
   snare: 'https://teropa.info/ext-assets/drumkit/snare3.mp3',
   hatClosed: 'https://teropa.info/ext-assets/drumkit/hatClosed.mp3',
   hatOpen: 'https://teropa.info/ext-assets/drumkit/hatOpen2.mp3',
+  tomLow: 'https://teropa.info/ext-assets/drumkit/tomLow.mp3',
+  tomMid: 'https://teropa.info/ext-assets/drumkit/tomMid.mp3',
+  tomHigh: 'https://teropa.info/ext-assets/drumkit/tomHigh.mp3',
+  ride: 'https://teropa.info/ext-assets/drumkit/ride.mp3',
+  crash: 'https://teropa.info/ext-assets/drumkit/hatOpen.mp3',
 }).toDestination()
 
 let bass = new Tone.Synth({
@@ -101,10 +106,60 @@ let midiToDrum = new Map([
 ]);
 let drumToMidi = new Map([...midiToDrum].map((e) => e.reverse()));
 
+// let bassPattern = [
+//   ['0:0:0', 'C#2'],
+//   ['0:0:3', 'C#2'],
+//   ['0:1:2', 'E1'],
+// ]
 let bassPattern = [
   ['0:0:0', 'C#2'],
   ['0:0:3', 'C#2'],
   ['0:1:2', 'E1'],
+  ['0:2:0', 'C#2'],
+  ['0:2:3', 'C#2'],
+  ['0:3:2', 'E1'],
+  ['1:0:0', 'C#2'],
+  ['1:0:3', 'C#2'],
+  ['1:1:2', 'E1'],
+  ['1:2:0', 'C#2'],
+  ['1:2:3', 'C#2'],
+  ['1:3:2', 'E1'],
+  ['2:0:0', 'F#2'],
+  ['2:0:3', 'F#2'],
+  ['2:1:2', 'C#2'],
+  ['2:2:0', 'F#2'],
+  ['2:2:3', 'F#2'],
+  ['2:3:2', 'C#2'],
+  ['3:0:0', 'F#2'],
+  ['3:0:3', 'F#2'],
+  ['3:1:2', 'C#2'],
+  ['3:2:0', 'F#2'],
+  ['3:2:3', 'F#2'],
+  ['3:3:2', 'C#2'],
+  ['4:0:0', 'A2'],
+  ['4:0:3', 'A2'],
+  ['4:1:2', 'E2'],
+  ['4:2:0', 'A2'],
+  ['4:2:3', 'A2'],
+  ['4:3:2', 'E2'],
+  ['5:0:0', 'A2'],
+  ['5:0:3', 'A2'],
+  ['5:1:2', 'E2'],
+  ['5:2:0', 'A2'],
+  ['5:2:3', 'A2'],
+  ['5:3:2', 'E2'],
+  ['6:0:0', 'C#2'],
+  ['6:0:3', 'C#2'],
+  ['6:1:2', 'E1'],
+  ['6:2:0', 'C#2'],
+  ['6:2:3', 'C#2'],
+  ['6:3:2', 'E1'],
+  ['7:0:0', 'C#2'],
+  ['7:0:3', 'C#2'],
+  ['7:1:2', 'E1'],
+  ['7:2:0', 'C#2'],
+  ['7:2:3', 'C#2'],
+  ['7:3:2', 'E1'],
 ]
 
 let leadPattern = [
@@ -135,14 +190,16 @@ let bassPart = new Tone.Part((time, note) => {
 }, bassPattern).start();
 bassPart.loop = true;
 bassPart.loopStart = 0;
-bassPart.loopEnd = '1m';
+//bassPart.loopEnd = '1m';
+bassPart.loopEnd = '8m';
 
 let leadPart = new Tone.Part((time, note) => {
   leadSampler.triggerAttackRelease(note, '2n', time);
 }, leadPattern).start();
 leadPart.loop = true;
 leadPart.loopStart = 0;
-leadPart.loopEnd = '2m';
+// leadPart.loopEnd = '2m';
+leadPart.loopEnd = '8m';
 
 // Interaction
 document.getElementById("start").onclick = async () => {
@@ -174,19 +231,24 @@ let sequencerRows = [
   'B3', 'G#3', 'E3', 'C#3',
   'B2', 'G#2', 'E2', 'C#2'
 ]
-sequencer.on('change', ({column, row, state}) => {
-  let time = {'16n': column};
-  let note = sequencerRows[row];
-  if (state) {
-    leadPart.add(time, note);
-  } else {
-    leadPart.remove(time, note);
+sequencer.on('change', generateMelodies
+  /*
+  ({column, row, state}) => {
+    let time = {'16n': column};
+    let note = sequencerRows[row];
+    if (state) {
+      leadPart.add(time, note);
+    } else {
+      leadPart.remove(time, note);
+    }
+    //console.log(time, note);
   }
-
-  //console.log(time, note);
-})
+  */
+)
 
 // Magenta stuff
+
+/*
 let melodyRnn = new music_rnn.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
 let melodyRnnLoaded = melodyRnn.initialize();
 
@@ -221,7 +283,7 @@ document.getElementById('generate-melody').onclick = async () => {
       sequencer.matrix.set.cell(column, row, 1);
     }
   }
-}
+}*/
 
 let grooVae = new music_vae.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/groovae_2bar_humanize');
 let grooVaeLoaded = grooVae.initialize();
@@ -240,4 +302,55 @@ document.getElementById('groove-drums').onclick = async () => {
     quantizationInfo: {stepsPerQuarter: 4}
   };
 
+  let z = await grooVae.encode([original])
+  let result = await grooVae.decode(z, 1.2, undefined, 4, Tone.Transport.bpm.value)
+  //console.log(result);
+
+  drumPart.clear();
+  for (let note of result[0].notes) {
+    drumPart.at(note.startTime, midiToDrum.get(note.pitch));
+  } 
+}
+
+let melChordsVae = new music_vae.MusicVAE('https://storage.googleapis.com/magentadata/js/checkpoints/music_vae/mel_chords')
+let melChordsLoaded = melChordsVae.initialize()
+
+async function generateMelodies() {
+  let input = {
+    notes: [],
+    totalQuantizedSteps: 32,
+    quantizationInfo: { stepsPerQuarter: 4 }
+  }
+
+  let pattern = sequencer.matrix.pattern;
+  for (let row = 0; row < pattern.length; row++) {
+    for (let col = 0; col < pattern[row].length; col++) {
+      if (pattern[row][col]) {
+        input.notes.push({
+          quantizedStartStep: col,
+          quantizedEndStep: col + 2,
+          pitch: Tone.Frequency(sequencerRows[row]).toMidi()
+        })
+      }
+    }
+  }
+
+  let z = await melChordsVae.encode([input], {chordProgression: ['C#m7']})
+
+  let one = await melChordsVae.decode(z, 1.0, {chordProgression: ['C#m7']})
+  let two = await melChordsVae.decode(z, 1.0, {chordProgression: ['F#m7']})
+  let three = await melChordsVae.decode(z, 1.0, {chordProgression: ['A']})
+  let four = await melChordsVae.decode(z, 1.0, {chordProgression: ['C#m7']})
+
+  let all = core.sequences.concatenate(
+    one.concat(two).concat(three).concat(four)
+  )
+
+  leadPart.clear();
+  for (let note of all.notes) {
+    leadPart.at(
+      {'16n': note.quantizedStartStep},
+      Tone.Frequency(note.pitch, 'midi').toNote()
+    )
+  }
 }
